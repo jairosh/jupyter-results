@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import AxesGrid
+# from mpl_toolkits.axes_grid1 import AxesGrid
 from matplotlib.lines import Line2D
 
-colourWheel = ['#329932',
+COLOR_WHEEL = ['#329932',
                '#ff6961',
                'b',
                '#6a3d9a',
@@ -27,63 +28,90 @@ colourWheel = ['#329932',
                '#4393c3',
                '#2166ac',
                '#053061']
-dashesStyles = [[3, 1],
-                [1000, 1],
-                [2, 1, 10, 1],
-                [4, 1, 1, 1, 1, 1]]
-
-# Load the results
-df = pd.read_csv('results_full.csv')
-
-# Filter out the unnecesary data
-# Fix the buffer size to 50MB
-df = df[df.buffer_size == 50]
-# Discard results for 800 and 1000
-df = df[df.nodes <= 600]
-
-points = df.groupby(by=['router', 'nodes', 'message_interval']).mean()
-error = df.groupby(by=['router', 'nodes', 'message_interval']).sem() * 1.96
-
-data = points[['delivery_prob', 'latency_avg', 'overhead_ratio']].join(error[['delivery_prob', 'latency_avg', 'overhead_ratio']], rsuffix='_err')
+DASHES = [[3, 1],
+          [1000, 1],
+          [2, 1, 10, 1],
+          [4, 1, 1, 1, 1, 1]]
 
 
-print(plt.style.available)
-plt.style.use('seaborn-darkgrid')
-# fig, ax = plt.subplots(ncols=4)
-fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
-nodes = [100, 400, 600]
-nodes.reverse()
-markers = []
-for m in Line2D.markers:
+def main():
+    """Main function
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--csv', help='CSV file to plot results from',
+                        type=str, required=True)
+    args = parser.parse_args()
+    # Load the results
     try:
-        if len(m) == 1 and m != ' ':
-            markers.append(m)
-    except TypeError as e:
-        pass
-print(markers)
+        dataframe = pd.read_csv(args.csv)
+    except Exception as err:
+        print('Error processing file ' + repr(err))
+        exit(1)
 
-# Linestyles
-# : (·········)
-# -. (-·-·-·-·)
-# -- (--------)
-# -  (solid line)
+    # Filter out the unnecesary data
+    # Fix the buffer size to 50MB
+    dataframe = dataframe[dataframe.buffer_size == 150]
+    # Discard results for 800 and 1000
+    dataframe = dataframe[dataframe.nodes <= 600]
 
-styles = ['b.-', 'r+--', 'g^-.', 'yv:', 'kx-', 'cs:', 'm<:']
-routers = ['Proposed', 'Spray n\' Wait', 'Epidemic', 'PRoPHET', 'SeeR', 'MaxPROP', 'Epidemic with Oracle']
-x = ['5,25', '25,35', '35,60', '60, 120']
-plt.setp(axes, xticks=[0, 1, 2, 3], xticklabels=x)
-fig.text(0.5, 0.04, 'Message creation interval (s)', ha='center')
-fig.text(0.04, 0.5, 'Packet Delivery Ratio', va='center', rotation='vertical')
+    groups = ['router', 'nodes', 'message_interval']
+    points = dataframe.groupby(by=groups).mean()
+    error = dataframe.groupby(by=groups).sem() * 1.96
 
-for subp in range(3):
-    n = nodes.pop()
-    axes[subp].set_title('n={}'.format(n))
-    for idx, router in enumerate(routers):
-        y = data.loc[router, n].reindex(x)
-        axes[subp].plot([0, 1, 2, 3], y['delivery_prob'].as_matrix(), styles[idx])
+    variables = ['delivery_prob', 'latency_avg', 'overhead_ratio']
+    data = points[variables].join(error[variables], rsuffix='_err')
 
-print('Showing')
-plt.legend(routers)
-plt.draw()
-plt.savefig('test.png')
-plt.show()
+    # Visualization options
+    # Styles: seaborn-notebook, seaborn-muted, seaborn-darkgrid,
+    #         Solarize_Light2, _classic_test, ggplot, classic,
+    #         seaborn, seaborn-bright, seaborn-whitegrid, seaborn-paper,
+    #         grayscale, seaborn-talk, seaborn-white, seaborn-poster,
+    #         fivethirtyeight, seaborn-deep, seaborn-dark-palette, bmh,
+    #         fast, seaborn-pastel, seaborn-dark, seaborn-colorblind,
+    #         seaborn-ticks, dark_background
+    #ggplot bmh
+    plt.style.use('bmh')
+    # Linestyles
+    # : (·········)
+    # -. (-·-·-·-·)
+    # -- (--------)
+    # -  (solid line)
+
+    linestyles = ['b.-', 'r+--', 'g^-.', 'yv:', 'kx-', 'cs:', 'm<:']
+    x_labels = ['[5,25]', '[25,35]', '[35,60]', '[60,120]']
+    x_values = ['5,25', '25,35', '35,60', '60, 120']
+
+    # Variables in plot
+    columns = [100, 200, 400]
+    columns.reverse()
+    ncols = len(columns)
+    routers = ['Proposed', 'Spray n\' Wait', 'Epidemic', 'PRoPHET', 'SeeR',
+               'MaxPROP', 'Epidemic with Oracle']
+    x_ticks = [0, 1, 2, 3]
+
+    fig, axes = plt.subplots(nrows=1, ncols=ncols, sharey=True, figsize=(15, 4))
+    plt.setp(axes, xticks=x_ticks, xticklabels=x_labels)
+    fig.text(0.44, 0.04, 'Message creation interval (s)', ha='center')
+    fig.text(0.02, 0.5, 'Packet Delivery Ratio', va='center',
+             rotation='vertical')
+
+    # Iterate through the subplot and plot in each one
+    for subplot in range(ncols):
+        network_size = columns.pop()
+        axes[subplot].set_title('n={}'.format(network_size))
+        for index, router in enumerate(routers):
+            y_data = data.loc[router, network_size].reindex(x_values)
+            axes[subplot].plot(x_ticks, y_data['delivery_prob'].as_matrix(),
+                               linestyles[index], linewidth=1,
+                               fillstyle='none')
+
+    axes[2].legend(routers, loc=2, bbox_to_anchor=(1, 1))
+    plt.ylim((0, 1))
+    plt.subplots_adjust(left=0.05, right=0.85, top=0.9, bottom=0.15, wspace=0.1)
+    plt.draw()
+    plt.savefig('test.png', bbox_inches='tight')
+    plt.show()
+
+
+if __name__ == '__main__':
+    main()
