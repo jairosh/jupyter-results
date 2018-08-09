@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 # from mpl_toolkits.axes_grid1 import AxesGrid
@@ -69,7 +70,7 @@ def main():
     #         fivethirtyeight, seaborn-deep, seaborn-dark-palette, bmh,
     #         fast, seaborn-pastel, seaborn-dark, seaborn-colorblind,
     #         seaborn-ticks, dark_background
-    #ggplot bmh
+    #  ggplot bmh
     plt.style.use('bmh')
     # Linestyles
     # : (·········)
@@ -89,10 +90,10 @@ def main():
                'MaxPROP', 'Epidemic with Oracle']
     x_ticks = [0, 1, 2, 3]
 
-    fig, axes = plt.subplots(nrows=1, ncols=ncols, sharey=True, figsize=(15, 4))
+    fig, axes = plt.subplots(nrows=1, ncols=ncols, sharey=True, figsize=(6.7, 2.25))
     plt.setp(axes, xticks=x_ticks, xticklabels=x_labels)
-    fig.text(0.44, 0.04, 'Message creation interval (s)', ha='center')
-    fig.text(0.02, 0.5, 'Packet Delivery Ratio', va='center',
+    fig.text(0.44, -0.2, 'Message creation interval (s)', ha='center')
+    fig.text(0.0, 0.5, 'Packet Delivery Ratio', va='center',
              rotation='vertical')
 
     # Iterate through the subplot and plot in each one
@@ -105,11 +106,15 @@ def main():
                                linestyles[index], linewidth=1,
                                fillstyle='none')
 
-    axes[2].legend(routers, loc=2, bbox_to_anchor=(1, 1))
+    axes[2].legend(routers, ncol=int(len(routers) / 2) + 1, loc='lower center',
+                   bbox_to_anchor=(-0.7, -0.7))
     plt.ylim((0, 1))
-    plt.subplots_adjust(left=0.05, right=0.85, top=0.9, bottom=0.15, wspace=0.1)
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.2)
+    for ax in fig.axes:
+        plt.sca(ax)
+        plt.xticks(rotation=90)
     plt.draw()
-    plt.savefig('test.png', bbox_inches='tight')
+    plt.savefig('test.pgf', bbox_inches='tight')
     plt.show()
 
 
