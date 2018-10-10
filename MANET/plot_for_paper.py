@@ -34,6 +34,8 @@ def export_legend(labels, outputfile='legend.pgf'):
     legend = plt.legend(handles, labels, loc=3, ncol=int(len(labels) / 2) + 1,
                         framealpha=0, frameon=False)
     fig.canvas.draw()
+    # fig.patch.set_visible(False)
+    plt.gca().axis('off')
     bbox = legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     fig.savefig(outputfile, dpi="figure", bbox_inches=bbox)
 
@@ -84,7 +86,7 @@ def plot_split_dataframe(dataframe, metric, ylabel, outputfile, title=True, size
                                   dashes=style[2], linewidth=1,
                                   fillstyle='none')
             axes[1, subplot].set_ylim(0, 700)
-            axes[0, subplot].set_ylim(2300, 2350)
+            axes[0, subplot].set_ylim(2000, 2500)
             # hide the spines between ax and ax2
             axes[1, subplot].spines['top'].set_visible(False)
             axes[0, subplot].spines['bottom'].set_visible(False)
@@ -137,7 +139,7 @@ def plot_dataframe(dataframe, metric, ylabel, outputfile, legend=True,
     fig, axes = plt.subplots(nrows=1, ncols=ncols, sharey=True,
                              figsize=(6.7, 2))
     plt.setp(axes, xticks=x_ticks, xticklabels=x_labels)
-    fig.text(0.44, -0.25, 'Message creation interval (s)', ha='center')
+    fig.text(0.44, -0.10, 'Message creation interval (s)', ha='center')
     fig.text(0.01, 0.5, ylabel, va='center', rotation='vertical')
 
     # Iterate through the subplot and plot in each one
@@ -165,9 +167,9 @@ def plot_dataframe(dataframe, metric, ylabel, outputfile, legend=True,
     # plt.ylim((0, 1))
     plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.2)
     # Rotate all the ticks in x axis
-    for ax in fig.axes:
-        plt.sca(ax)
-        plt.xticks(rotation=90)
+    #for ax in fig.axes:
+    #    plt.sca(ax)
+    #    plt.xticks(rotation=90)
     plt.draw()
     plt.savefig(outputfile, bbox_inches='tight')
 
